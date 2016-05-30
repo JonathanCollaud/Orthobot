@@ -1,4 +1,4 @@
 # Orthobot
 SHS Digital Humanities Project
 
-To run the bot, simply type 'python orthobot.py'
+To run the bot, simply type 'python orthobot.py' in your terminal
