@@ -1,2 +1,2 @@
-Utilisateur: Orthobot
+Utilisateur: OrthoBot
 Mot de passe: Orthy

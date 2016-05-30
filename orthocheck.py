@@ -3,7 +3,8 @@
 import codecs
 import time
 import csv
-from bisect import bisect_left
+import re
+from utils import *
 
 # classes
 class FrenchDict:
@@ -79,30 +80,64 @@ class Orthocheck:
     or return a ready-to-use wikipedia section 
     containing the list of wrong words and their number in the list
     """
-    def __init__(self, botname = 'OrthoBot', spefile = 'orthocheck_spewords.txt'):
-        self.page_name = ''
+    def __init__(self, section_name, botname = 'OrthoBot'):
+        self.page_name1 = ''
+        self.page_name2 = ''
         self.words = []
         self.dico = MultiDict()
-        with codecs.open(spefile, encoding='mac_roman') as swords:
-            self.spe_words = swords.read().split('\n')
-        self.no_mistake = 'NOFAUTE'
-        self.wiki_title = "Possibles fautes d'orthographe"
-        self.wiki_author = 'par ' + botname
-        self.wiki_tuto = u"""Si un mot n'est pas une faute d'orthographe : ajouter '{NOM}' juste après celui-ci.
-Exemple : 'Lausanne' n'est pas une faute d'orthographe --> 'Lausanne {NOM}'""".format(NOM = self.no_mistake)
+        self.spewords_file = '_orthocheck_spewords.txt'
+        self.spe_words = []
+        with open(self.spewords_file) as swords:
+            # self.spe_words = swords.read().split('\n')
+            for word in swords:
+                self.spe_words.append(word.strip().decode('utf-8'))
+        self.DB_file = '_orthocheck_DB.txt'
+        try:
+            with open(self.DB_file, 'r') as dbwords: pass
+        except IOError:
+            # creates the database file is it doesn't exist
+            with open(self.DB_file, 'w') as dbwords: pass
+        self.DB_words = []
+        with open(self.DB_file, 'r') as dbwords:
+            # self.DB_words = dbwords.read().split('\n')
+            for word in dbwords:
+                self.DB_words.append(word.strip().decode('utf-8'))
+        self.not_a_mistake = u'NOFAUTE'
+        self.wiki_title = section_name
+        self.wiki_author = botname.decode('utf-8')
+        self.wiki_tuto = u"""Si un mot n'est pas une faute d'orthographe : ajouter '{no_mis}' juste après celui-ci dans la liste ci-dessus.
+Exemple : 'Lausanne' n'est pas une faute d'orthographe --> 'Lausanne {no_mis}'""".format(no_mis = self.not_a_mistake)
+        self.wiki_no_mistake = u"cette page a été vérifiée, il semble n'y avoir aucune faute d'orthographe."
+        self.html = ['<code>', '</code>']
+
+        # here are two strings delimiting the 'zone' of orthocheck/orthobot in the wiki page
+        self.start_str = wiki_text_sec(self.wiki_title)
+        self.stop_str = self.html[1]
 
     def update_page(self, page_name, words_to_check):
-        self.page_name = page_name
+        self.page_name1 = page_name.decode('utf-8')
+        self.page_name2 = page_name.decode('utf-8').split('_')
         self.words = words_to_check
 
-    # def update_database(self, text_from_wiki):
-    #     words = text_from_wiki.split(' ')
-    #     for i in range(len(words)-1):
-    #         if (word[i] == self.no_mistake) and (i > 0):
-                
+    def update_database(self, text_from_wiki):
+        # words = re.findall(r"[\w'-]+", text_from_wiki)
+        words = re.findall(r"[\w'-]+", text_from_wiki, re.UNICODE)
+        with open(self.DB_file, 'a') as dbfile:
+            for i in range(1, len(words)):
+                if (words[i] == self.not_a_mistake) and (i > 0) \
+                and not self.is_special(words[i-1]):
+                    dbfile.write(words[i-1].encode('utf-8') + '\n')
+            
+        # update instance variable self.DB_words, just in case
+        with open(self.DB_file, 'r') as dbfile:
+            for word in dbfile:
+                self.DB_words.append(word.strip().decode('utf-8'))
 
     def is_special(self, word):
-        return word == self.page_name or word.lower() in self.spe_words
+        return word == self.page_name1 \
+        or word in self.page_name2 \
+        or word.lower() in self.spe_words \
+        or word in self.DB_words
 
     def is_good(self, word):
         """
@@ -243,7 +278,7 @@ Exemple : 'Lausanne' n'est pas une faute d'orthographe --> 'Lausanne {NOM}'""".f
         elif comparison_type == 2:
             return self.basic_compare(False)
         elif comparison_type == 3:
-            return self.binary_compare()
+            return self.binary_compare() # mess with somewords...
         elif comparison_type == 4:
             return self.index_compare()
         elif comparison_type == 5:
@@ -265,15 +300,20 @@ Exemple : 'Lausanne' n'est pas une faute d'orthographe --> 'Lausanne {NOM}'""".f
             i += 2
         return new_words
 
-    def wiki_section(self, with_numbers):
+    def wiki_section(self, with_numbers = False, htlm_code = True):
         """
         Returns the text ready to use to create a new section on wiki
         """
+        if htlm_code:
+            html = self.html
+        else:
+            html = ['', '']
+
+        # wikitext = ['section title', 'section content']
+        wikitext = '\n' + wiki_text_sec(self.wiki_title)
         wwords = self.compare_with_dico(4)
-        wikitext = ''
         if len(wwords) != 0:
-            wikitext += wiki_text_sec(self.wiki_title)
-            wikitext += '\n' + wiki_text_it(self.wiki_author)
+            wikitext += '\n' + html[0] + ' par ' + wiki_text_it(self.wiki_author)
             i = 0
             while i < len(wwords):
                 n = str(wwords[i]+1)
@@ -283,78 +323,34 @@ Exemple : 'Lausanne' n'est pas une faute d'orthographe --> 'Lausanne {NOM}'""".f
                 else:
                     wikitext += '\n* ' + w
                 i += 2
-        wikitext += '\n' + self.wiki_tuto
+            wikitext += '\n' + self.wiki_tuto + '\n' + html[1]
+        else:
+            wikitext += '\n' + html[0] + wiki_text_it(self.wiki_author) \
+            + ' : ' + self.wiki_no_mistake + '\n' + html[1]
         return wikitext
     # ------------------------- #
 
 
-#########
-
-# other functions
-## test if a word contains digits or uppercase letters
-def digit_in(word):
-    return any(char.isdigit() for char in word)
-def upper_in(word):
-    return any(char.isupper() for char in word)
-
-## some functions to format word in the 'wiki way'
-def wiki_text_bf(word):
-    return "'''" + word + "'''"
-def wiki_text_it(word):
-    return "''" + word + "''"
-def wiki_text_sec(word):
-    return "== " + word + " =="
-def wiki_text_ssec(word):
-    return "=== " + word + " ==="
-
-## simple binary search algorithm
-def binary_search(val, tab):
-    found = False
-    i_i = 0
-    i_f = len(tab)-1
-    if tab[i_i] == val:
-        return i_i
-    elif tab[i_f] == val:
-        return i_f
-    while (not found) and ((i_f - i_i) > 1):
-        i_m = (i_i + i_f) / 2
-        # print i_m
-        found = (tab[i_m] == val)
-        # print found
-        if tab[i_m] > val:
-            i_f = i_m
-        else:
-            i_i = i_m
-    if tab[i_i] == val:
-        return i_i
-    elif tab[i_f] == val:
-        return i_f
-    else:
-        return -1
-
-def binary_search2(a, x, lo=0, hi=None):   # can't use a to specify default for hi
-    hi = hi if hi is not None else len(a) # hi defaults to len(a)   
-    pos = bisect_left(a,x,lo,hi)          # find insertion position
-    return (pos if pos != hi and a[pos] == x else -1) # don't walk off the end
-
-
-#########
-
 # TESTS
 def main():
-    test = ['aga', 'zub', 'arbre', 'avion', '34', 'age45', 
-            'imeuble', 'wagon', 't4re', 'monndes', 'avouer',
-            'avérer', 'montrèrent', 'Alphonse', 'esSaitr', 'Paris']
+    test = ['Skladowska', 'Lausanne', 'arbre', 'Varsovie', 'Genevois', 'CHF']
 
     print test
 
     # t = time.time()
 
-    ortotest = Orthocheck(test)
+    ortotest = Orthocheck()
+    ortotest.update_page('test', test)
 
     # print time.time() - t
 
-    print ortotest.wiki_section(True)
+    # for w in test:
+    #     print w
+    #     print type(w)
+    #     print ortotest.is_special(w)
+    for w in ortotest.DB_words:
+        print w
+        print type(w)
 
 if __name__ == "__main__":
     main()

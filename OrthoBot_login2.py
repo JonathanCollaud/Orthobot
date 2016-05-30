@@ -6,9 +6,8 @@ import requests
 from bs4 import BeautifulSoup
 
 #Login
-
 # Login params
-user='OrthoBot'
+user='Orthobot'
 passw=urllib2.quote('Orthy')
 baseurl='http://wikipast.world/wiki/'
 login_params='?action=login&lgname=%s&lgpassword=%s&format=json'% (user,passw)
@@ -28,40 +27,42 @@ edit_token=r3.json()['query']['tokens']['csrftoken']
 
 edit_cookie=r2.cookies.copy()
 edit_cookie.update(r3.cookies)
-    
 
-#get all pages
 
-#get the first 500 pages
-result=requests.post(baseurl+'api.php?action=query&list=allpages&aplimit=500&format=xml')
-soup=BeautifulSoup(result.text,'lxml')
-#print(result.text)
+def wiki_all_pagenames():
 
-# print names 
-#find all p
-pagename_to_check = []
-for primitive in soup.findAll('p'):
-    #print(primitive['title'])
-    pagename_to_check.append(primitive['title'])
-    newx=primitive['title']
-        
-#get all the other pages   
-while True:
-    result=requests.post(baseurl+'api.php?action=query&list=allpages&apfrom='+newx+'&aplimit=20&format=xml')
-        #print(newx)
+    #get all pages
+
+    #get the first 500 pages
+    result=requests.post(baseurl+'api.php?action=query&list=allpages&aplimit=500&format=xml')
     soup=BeautifulSoup(result.text,'lxml')
-        #print(result.text)
+    #print(result.text)
 
-        #print names of all pages
-        #find all p
-    x=newx
+    # print names
+    #find all p
+    pagename_to_check = []
     for primitive in soup.findAll('p'):
         #print(primitive['title'])
         pagename_to_check.append(primitive['title'])
         newx=primitive['title']
-        #print(newx)
-               
-    if x==newx:
-            break
+            
+    #get all the other pages   
+    while False:
+        result=requests.post(baseurl+'api.php?action=query&list=allpages&apfrom='+newx+'&aplimit=20&format=xml')
+            #print(newx)
+        soup=BeautifulSoup(result.text,'lxml')
+            #print(result.text)
 
-print pagename_to_check
+            #print names of all pages
+            #find all p
+        x=newx
+        for primitive in soup.findAll('p'):
+            #print(primitive['title'])
+            pagename_to_check.append(primitive['title'])
+            newx=primitive['title']
+            #print(newx)
+                   
+        if x==newx:
+                break
+
+    return pagename_to_check
