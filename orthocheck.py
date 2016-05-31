@@ -106,7 +106,8 @@ class Orthocheck:
         self.wiki_title = section_name
         self.wiki_author = botname.decode('utf-8')
         self.wiki_tuto = u"""Si un mot n'est pas une faute d'orthographe : ajouter '{no_mis}' juste après celui-ci dans la liste ci-dessus.
-Exemple : 'Lausanne' n'est pas une faute d'orthographe --> 'Lausanne {no_mis}'""".format(no_mis = self.not_a_mistake)
+La prochaine fois que la page sera vérifiée, ce mot ne sera plus considéré comme une faute.
+Exemple : 'Lausanne' n'est pas une faute d'orthographe --> 'Lausanne {no_mis}'.""".format(no_mis = self.not_a_mistake)
         self.wiki_no_mistake = u"cette page a été vérifiée, il semble n'y avoir aucune faute d'orthographe."
         self.html = ['<code>', '</code>']
 

@@ -2,7 +2,7 @@
 
 ### ORTHOBOT main ###
 
-# from OrthoBot_login2 import *
+from OrthoBot_login2 import *
 from OrthoBot_changecontent2 import *
 from parser import *
 from orthocheck import *
@@ -12,11 +12,10 @@ def main():
     orthochecker = Orthocheck(section_name)
 
     URL_done = []
-    pagename_list = ['Henri_Dunant'] # usually given by OrthoBot_login
-    print wiki_all_pagenames()
+    pagename_list = ['Ortobottest'] # usually given by OrthoBot_login
     # pagename_list = wiki_all_pagenames()
-    # pagename_list = pagename_list[:10]
-    # print pagename_list
+    # pagename_list = pagename_list[1:10]
+    print pagename_list
     for pagename in pagename_list: #pagename_to_check:
         t = time.time()
 
