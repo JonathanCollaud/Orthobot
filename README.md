@@ -1,7 +1,12 @@
-# OrthoBot
+# OrthoBot - spelling checker for wikipast.world pages
+
 SHS Digital Humanities Project
+
 Arnaud G., Aymeric G., Jonathan C., Lukas S.
+
 2016
+
+----
 
 To run the bot, type 'python orthobot.py' in your terminal.
 
