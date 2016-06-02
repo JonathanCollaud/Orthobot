@@ -1,4 +1,4 @@
-# ORTHOBOT
+# OrthoBot
 SHS Digital Humanities Project
 Arnaud G., Aymeric G., Jonathan C., Lukas S.
 2016
