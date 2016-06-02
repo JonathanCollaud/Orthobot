@@ -1,4 +1,4 @@
-# OrthoBot - spelling checker for wikipast.world pages
+# OrthoBot - spelling checker for wikipast.world
 
 SHS Digital Humanities Project
 
